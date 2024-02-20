@@ -1,0 +1,47 @@
+name: Build Release Workflow
+
+on:
+  workflow_dispatch: # Manual triggering
+
+jobs:
+  release:
+    name: Create and Publish Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '14' # Specify the Node.js version you want to use
+
+      - name: Install dependencies
+        run: npm install
+
+      # Manually create a release tag
+      - name: Create Release Tag
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+        with:
+          tag_name: ${{ github.event.inputs.tag }} # Custom tag name provided as input
+          release_name: Release ${{ github.event.inputs.tag }}
+          body: |
+            Release created manually from GitHub Actions.
+          draft: false
+          prerelease: false
+
+      # Publish the release
+      - name: Publish Release
+        if: steps.create_release.outputs.upload_url != ''
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_content_type: application/zip # Adjust content type as needed
+          asset_name: your-release-assets.zip # Adjust asset name as needed
+          asset_path: ./path/to/release/assets # Adjust path as needed
