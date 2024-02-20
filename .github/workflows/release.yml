@@ -12,9 +12,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      - name: Get latest commit hash
-        id: get_commit_hash
-        run: echo "::set-output name=commit_hash::$(git rev-parse HEAD)"
+      - name: Get latest tag
+        id: get_latest_tag
+        run: |
+          git fetch --tags
+          latest_tag=$(git describe --abbrev=0 --tags)
+          echo "::set-output name=latest_tag::$latest_tag"  
 
       - name: Get previous tag
         id: get_previous_tag
@@ -22,13 +25,44 @@ jobs:
           git fetch --tags
           echo "::set-output name=previous_tag::$(git describe --abbrev=0 --tags $(git rev-list --tags --skip=1 --max-count=1))"
 
-      - name: Create Custom Release
-        id: create_release
+      - name: Get latest pull request number
+        id: get_latest_pull_request_number
+        run: |
+          latest_pr=$(git log --pretty=format:"%s" -1 | grep -o 'Pull request #[0-9]\+' | grep -o '[0-9]\+')
+          echo "::set-output name=latest_pull_request_number::$latest_pr"
+
+      - name: Get current date and time
+        id: get_date_time
+        run: |
+          current_date=$(date +%d)
+          current_month=$(date +%m)
+          current_time_minutes=$(date +%M)
+          current_time_seconds=$(date +%S)
+          echo "::set-output name=current_date::$current_date"
+          echo "::set-output name=current_month::$current_month"
+          echo "::set-output name=current_time_minutes::$current_time_minutes"
+          echo "::set-output name=current_time_seconds::$current_time_seconds"
+
+      - name: Create Custom Release Tag
+        id: create_custom_tag
         run: |
           previous_tag=${{ steps.get_previous_tag.outputs.previous_tag }}
-          current_tag=${{ github.event.inputs.tag }}
-          echo "Comparing changes between $previous_tag and $current_tag"
-          # Add your custom steps to create the release with the desired tag
+          latest_pr=${{ steps.get_latest_pull_request_number.outputs.latest_pull_request_number }}
+          current_date=${{ steps.get_date_time.outputs.current_date }}
+          current_month=${{ steps.get_date_time.outputs.current_month }}
+          current_time_minutes=${{ steps.get_date_time.outputs.current_time_minutes }}
+          current_time_seconds=${{ steps.get_date_time.outputs.current_time_seconds }}
+          custom_tag="TEST_${current_date}-${current_month}_${latest_pr}-${current_time_minutes}-${current_time_seconds}"
+          echo "Latest tag: $custom_tag"
+          git tag $custom_tag
+          git push origin $custom_tag
+
+      - name: Compare changes
+        run: |
+          latest_tag=${{ steps.get_latest_tag.outputs.latest_tag }}
+          previous_tag=${{ steps.get_previous_tag.outputs.previous_tag }}
+          echo "Comparing changes between $previous_tag and $latest_tag"
+          # Add your comparison logic here
 
       - name: Publish Release
         id: publish_release
