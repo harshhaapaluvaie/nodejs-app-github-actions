@@ -1,47 +1,36 @@
-name: Build Release Workflow
+name: Manual Release Workflow
 
 on:
   workflow_dispatch: # Manual triggering
 
 jobs:
   release:
-    name: Create and Publish Release
+    name: Create and Publish Custom Release
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v2
-        with:
-          node-version: '14' # Specify the Node.js version you want to use
+      - name: Get latest commit hash
+        id: get_commit_hash
+        run: echo "::set-output name=commit_hash::$(git rev-parse HEAD)"
 
-      - name: Install dependencies
-        run: npm install
+      - name: Get previous tag
+        id: get_previous_tag
+        run: |
+          git fetch --tags
+          echo "::set-output name=previous_tag::$(git describe --abbrev=0 --tags $(git rev-list --tags --skip=1 --max-count=1))"
 
-      # Manually create a release tag
-      - name: Create Release Tag
+      - name: Create Custom Release
         id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
-        with:
-          tag_name: ${{ github.event.inputs.tag }} # Custom tag name provided as input
-          release_name: Release ${{ github.event.inputs.tag }}
-          body: |
-            Release created manually from GitHub Actions.
-          draft: false
-          prerelease: false
+        run: |
+          previous_tag=${{ steps.get_previous_tag.outputs.previous_tag }}
+          current_tag=${{ github.event.inputs.tag }}
+          echo "Comparing changes between $previous_tag and $current_tag"
+          # Add your custom steps to create the release with the desired tag
 
-      # Publish the release
       - name: Publish Release
-        if: steps.create_release.outputs.upload_url != ''
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_content_type: application/zip # Adjust content type as needed
-          asset_name: your-release-assets.zip # Adjust asset name as needed
-          asset_path: ./path/to/release/assets # Adjust path as needed
+        id: publish_release
+        run: |
+          # Add your steps to publish the release (e.g., create release notes, upload assets, etc.)
