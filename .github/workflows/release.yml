@@ -66,15 +66,14 @@ jobs:
           git tag $custom_tag
           git push origin $custom_tag
 
-      - name: Create release
+      - name: Create Release
         id: create_release
         uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
         with:
           tag_name: ${{ steps.create_custom_tag.outputs.custom_tag }}
-          release_name: $custom_tag Release 
-          body: |
-            Release created automatically from GitHub Actions.
+          release_name: ${{ steps.create_custom_tag.outputs.custom_tag }} Release
+          body: Release created automatically from GitHub Actions.
           draft: false
           prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
