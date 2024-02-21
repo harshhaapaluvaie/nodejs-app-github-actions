@@ -7,10 +7,15 @@ jobs:
   publish_release:
     name: Publish Release
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
+        with:
+          token: ${{ secrets.GH_TOKEN }}
       
       - name: Get previous tag
         id: get_previous_tag
