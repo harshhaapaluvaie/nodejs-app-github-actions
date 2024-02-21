@@ -29,7 +29,12 @@ jobs:
       - name: Get latest pull request number
         id: get_latest_pull_request_number
         run: |
-          latest_pr=$(git log --pretty=format:"%s" -1 | grep -o 'Pull request #[0-9]\+' | grep -o '[0-9]\+')
+          latest_pr=$(git log --pretty=format:"%s" -1)
+          echo "Commit message: $latest_pr"
+          latest_pr=$(echo "$latest_pr" | grep -o 'Pull request #[0-9]\+')
+          echo "Matched pull request: $latest_pr"
+          latest_pr=$(echo "$latest_pr" | grep -o '[0-9]\+')
+          echo "Extracted pull request number: $latest_pr"
           echo "::set-output name=latest_pull_request_number::$latest_pr"
 
       - name: Get current date and time
