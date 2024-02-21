@@ -26,20 +26,20 @@ jobs:
           previous_tag=$(git describe --abbrev=0 --tags | grep -B 1 "TEST_" | head -n 1)
           echo "::set-output name=previous_tag::$previous_tag"
 
-      - name: Get latest pull request number
-        id: get_latest_pull_request_number
-        run: |
-          latest_pr=$(git log --pretty=format:"%s" -1)
-          echo "Commit message: $latest_pr"
-          matched_pr=$(echo "$latest_pr" | grep -o 'Pull request #[0-9]\+')
-          if [ -z "$matched_pr" ]; then
-            echo "No pull request reference found in the commit message."
-            exit 0  # Exit with success to prevent failure
-          fi
-          echo "Matched pull request: $matched_pr"
-          latest_pr=$(echo "$matched_pr" | grep -o '[0-9]\+')
-          echo "Extracted pull request number: $latest_pr"
-          echo "::set-output name=latest_pull_request_number::$latest_pr"
+#      - name: Get latest pull request number
+#        id: get_latest_pull_request_number
+#        run: |
+#          latest_pr=$(git log --pretty=format:"%s" -1)
+#          echo "Commit message: $latest_pr"
+#          matched_pr=$(echo "$latest_pr" | grep -o 'Pull request #[0-9]\+')
+#          if [ -z "$matched_pr" ]; then
+#            echo "No pull request reference found in the commit message."
+#            exit 0  # Exit with success to prevent failure
+#          fi
+#          echo "Matched pull request: $matched_pr"
+#          latest_pr=$(echo "$matched_pr" | grep -o '[0-9]\+')
+#          echo "Extracted pull request number: $latest_pr"
+#          echo "::set-output name=latest_pull_request_number::$latest_pr"
 
       - name: Get current date and time
         id: get_date_time
@@ -57,12 +57,11 @@ jobs:
         id: create_custom_tag
         run: |
           previous_tag=${{ steps.get_previous_tag.outputs.previous_tag }}
-          latest_pr=${{ steps.get_latest_pull_request_number.outputs.latest_pull_request_number }}
           current_date=${{ steps.get_date_time.outputs.current_date }}
           current_month=${{ steps.get_date_time.outputs.current_month }}
           current_time_minutes=${{ steps.get_date_time.outputs.current_time_minutes }}
           current_time_seconds=${{ steps.get_date_time.outputs.current_time_seconds }}
-          custom_tag="TEST_${current_date}-${current_month}_${latest_pr}-${current_time_minutes}-${current_time_seconds}"
+          custom_tag="TEST_${current_date}-${current_month}-${current_time_minutes}-${current_time_seconds}"
           echo "Latest tag: $custom_tag"
           git tag $custom_tag
           git push origin $custom_tag
