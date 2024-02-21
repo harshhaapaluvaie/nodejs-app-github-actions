@@ -12,12 +12,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      - name: Get latest tag
-        id: get_latest_tag
-        run: |
-          git fetch --tags
-          latest_tag=$(git describe --abbrev=0 --tags "TEST_*")
-          echo "::set-output name=latest_tag::$latest_tag"  
+#      - name: Get latest tag
+#        id: get_latest_tag
+#        run: |
+#          git fetch --tags
+#          latest_tag=$(git describe --abbrev=0 --tags "TEST_*")
+#          echo "::set-output name=latest_tag::$latest_tag"  
 
       - name: Get previous tag
         id: get_previous_tag
@@ -58,14 +58,15 @@ jobs:
           git tag $custom_tag
           git push origin $custom_tag
 
-      - name: Compare changes
-        run: |
-          latest_tag=${{ steps.get_latest_tag.outputs.latest_tag }}
-          previous_tag=${{ steps.get_previous_tag.outputs.previous_tag }}
-          echo "Comparing changes between $previous_tag and $latest_tag"
-          # Add your comparison logic here
-
-      - name: Publish Release
-        id: publish_release
-        run: |
-          # Add your steps to publish the release (e.g., create release notes, upload assets, etc.)
+      - name: Create release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+        with:
+          tag_name: ${{ steps.create_custom_tag.outputs.custom_tag }}
+          release_name: $custom_tag Release 
+          body: |
+            Release created automatically from GitHub Actions.
+          draft: false
+          prerelease: false
