@@ -37,12 +37,18 @@ jobs:
           git tag $custom_tag $previous_tag
           git push origin $custom_tag
 
+      - name: Fetch Latest Tag
+        id: fetch_latest_tag
+        run: |
+          latest_tag=$(git tag --list "TEST_${current_date}-${current_month}-*" | tail -n 1)
+          echo "::set-output name=latest_tag::$latest_tag"
+
       - name: Publish Release
         id: publish_release
         uses: actions/create-release@v1
         with:
-          tag_name: ${{ steps.create_custom_tag.outputs.custom_tag }} # Use the custom tag as the tag name
-          release_name: Release for ${{ steps.create_custom_tag.outputs.custom_tag }}
+          tag_name: ${{ steps.fetch_latest_tag.outputs.latest_tag }} # Use the custom tag as the tag name
+          release_name: Release for ${{ steps.fetch_latest_tag.outputs.latest_tag }}
           body: Release created automatically from GitHub Actions.
           draft: false
           prerelease: false
