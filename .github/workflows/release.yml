@@ -31,9 +31,13 @@ jobs:
         run: |
           latest_pr=$(git log --pretty=format:"%s" -1)
           echo "Commit message: $latest_pr"
-          latest_pr=$(echo "$latest_pr" | grep -o 'Pull request #[0-9]\+')
-          echo "Matched pull request: $latest_pr"
-          latest_pr=$(echo "$latest_pr" | grep -o '[0-9]\+')
+          matched_pr=$(echo "$latest_pr" | grep -o 'Pull request #[0-9]\+')
+          if [ -z "$matched_pr" ]; then
+            echo "No pull request reference found in the commit message."
+            exit 0  # Exit with success to prevent failure
+          fi
+          echo "Matched pull request: $matched_pr"
+          latest_pr=$(echo "$matched_pr" | grep -o '[0-9]\+')
           echo "Extracted pull request number: $latest_pr"
           echo "::set-output name=latest_pull_request_number::$latest_pr"
 
