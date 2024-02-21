@@ -1,77 +1,43 @@
-name: Manual Release Workflow
+name: Publish Release Workflow
 
 on:
   workflow_dispatch: # Manual triggering
 
 jobs:
-  release:
-    name: Create and Publish Custom Release
+  publish_release:
+    name: Publish Release
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
-
-#      - name: Get latest tag
-#        id: get_latest_tag
-#        run: |
-#          git fetch --tags
-#          latest_tag=$(git describe --abbrev=0 --tags "TEST_*")
-#          echo "::set-output name=latest_tag::$latest_tag"  
-
+      
       - name: Get previous tag
         id: get_previous_tag
         run: |
           git fetch --tags
-          previous_tag=$(git describe --abbrev=0 --tags | grep -B 1 "TEST_" | head -n 1)
+          previous_tag=$(git describe --abbrev=0 --tags $(git rev-list --tags --skip=1 --max-count=1))
           echo "::set-output name=previous_tag::$previous_tag"
-
-#      - name: Get latest pull request number
-#        id: get_latest_pull_request_number
-#        run: |
-#          latest_pr=$(git log --pretty=format:"%s" -1)
-#          echo "Commit message: $latest_pr"
-#          matched_pr=$(echo "$latest_pr" | grep -o 'Pull request #[0-9]\+')
-#          if [ -z "$matched_pr" ]; then
-#            echo "No pull request reference found in the commit message."
-#            exit 0  # Exit with success to prevent failure
-#          fi
-#          echo "Matched pull request: $matched_pr"
-#          latest_pr=$(echo "$matched_pr" | grep -o '[0-9]\+')
-#          echo "Extracted pull request number: $latest_pr"
-#          echo "::set-output name=latest_pull_request_number::$latest_pr"
-
-      - name: Get current date and time
-        id: get_date_time
-        run: |
-          current_date=$(date +%d)
-          current_month=$(date +%m)
-          current_time_minutes=$(date +%M)
-          current_time_seconds=$(date +%S)
-          echo "::set-output name=current_date::$current_date"
-          echo "::set-output name=current_month::$current_month"
-          echo "::set-output name=current_time_minutes::$current_time_minutes"
-          echo "::set-output name=current_time_seconds::$current_time_seconds"
 
       - name: Create Custom Release Tag
         id: create_custom_tag
         run: |
           previous_tag=${{ steps.get_previous_tag.outputs.previous_tag }}
-          current_date=${{ steps.get_date_time.outputs.current_date }}
-          current_month=${{ steps.get_date_time.outputs.current_month }}
-          current_time_minutes=${{ steps.get_date_time.outputs.current_time_minutes }}
-          current_time_seconds=${{ steps.get_date_time.outputs.current_time_seconds }}
+          current_date=$(date +%d)
+          current_month=$(date +%m)
+          current_time_minutes=$(date +%M)
+          current_time_seconds=$(date +%S)
           custom_tag="TEST_${current_date}-${current_month}-${current_time_minutes}-${current_time_seconds}"
-          echo "Latest tag: $custom_tag"
-          git tag $custom_tag
+          echo "Custom tag: $custom_tag"
+          git tag $custom_tag $previous_tag
           git push origin $custom_tag
 
-      - name: Create Release
-        id: create_release
+      - name: Publish Release
+        id: publish_release
         uses: actions/create-release@v1
         with:
-          tag_name: ${{ steps.create_custom_tag.outputs.custom_tag }}
-          release_name: ${{ steps.create_custom_tag.outputs.custom_tag }} Release
+          tag_name: ${{ steps.create_custom_tag.outputs.custom_tag }} # Use the custom tag as the tag name
+          release_name: Release for ${{ steps.create_custom_tag.outputs.custom_tag }}
           body: Release created automatically from GitHub Actions.
           draft: false
           prerelease: false
