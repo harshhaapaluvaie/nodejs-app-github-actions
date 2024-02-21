@@ -40,7 +40,7 @@ jobs:
       - name: Fetch Latest Tag
         id: fetch_latest_tag
         run: |
-          latest_tag=$(git tag --list "TEST_${current_date}-${current_month}-*" | tail -n 1)
+          latest_tag=$(git describe --abbrev=0 --tags)
           echo "::set-output name=latest_tag::$latest_tag"
 
       - name: Publish Release
