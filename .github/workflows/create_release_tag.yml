@@ -1,0 +1,26 @@
+name: Create Custom Release Tag
+
+on:
+    workflow_dispatch:
+
+jobs:
+  create_release_tag:
+    name: Create and Publish Release Tag
+    runs-on: ubuntu-latest
+    permissions:
+        contents: write
+        pull-requests: write
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
+      - name: Set Tag Name
+        id: set_tag_name
+        run: echo "::set-output name=tag_name::TEST-DEV_$(date +'%dth-%b_%H-%M%p')"
+
+      - name: Create Tag
+        run: git tag ${{ steps.set_tag_name.outputs.tag_name }}
+
+      - name: Push Tag to Remote
+        run: git push origin ${{ steps.set_tag_name.outputs.tag_name }}
