@@ -28,10 +28,10 @@ jobs:
           echo "OLD_TAG=$(git describe --abbrev=0 --tags origin/master)" >> $GITHUB_ENV
 
       - name: Compare Changes
-        run: git diff --name-only $OLD_TAG ${{ steps.set_tag_name.outputs.tag_name }} > changes.txt
-
-      - name: Read Changes
-        run: echo "::set-env name=CHANGES::$(cat changes.txt)"
+        id: compare_changes
+        run: |
+          changes=$(git diff --name-only $OLD_TAG ${{ steps.set_tag_name.outputs.tag_name }})
+          echo "::set-output name=changes::$changes"
 
       - name: Push Tag to Remote
         run: git push origin ${{ steps.set_tag_name.outputs.tag_name }}
@@ -42,14 +42,13 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
           OLD_TAG: ${{ env.OLD_TAG }}
-          CHANGES: ${{ env.CHANGES }}
         with:
           tag_name: ${{ steps.set_tag_name.outputs.tag_name }}
           release_name: Release ${{ steps.set_tag_name.outputs.tag_name }}
           body: |
             Changes since $OLD_TAG:
             ```
-            ${{ env.CHANGES }}
+            ${{ steps.compare_changes.outputs.changes }}
             ```
           draft: false
           prerelease: false
