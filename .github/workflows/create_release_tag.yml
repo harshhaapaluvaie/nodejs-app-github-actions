@@ -25,10 +25,11 @@ jobs:
       - name: Fetch master branch and old tag
         run: |
           git fetch origin master --tags
-          old_tag=$(git describe --abbrev=0 --tags origin/master)
+          echo "::set-env name=OLD_TAG::$(git describe --abbrev=0 --tags origin/master)"
 
       - name: Compare Changes
-        run: git diff --name-only $old_tag ${{ steps.set_tag_name.outputs.tag_name }}
+        id: compare_changes
+        run: git diff --name-only $OLD_TAG ${{ steps.set_tag_name.outputs.tag_name }}
 
       - name: Push Tag to Remote
         run: git push origin ${{ steps.set_tag_name.outputs.tag_name }}
@@ -38,11 +39,12 @@ jobs:
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+          OLD_TAG: ${{ env.OLD_TAG }}
         with:
           tag_name: ${{ steps.set_tag_name.outputs.tag_name }}
           release_name: Release ${{ steps.set_tag_name.outputs.tag_name }}
           body: |
-            Changes since ${{ old_tag }}:
+            Changes since ${{ env.OLD_TAG }}:
             ```
             ${{ steps.compare_changes.outputs.stdout }}
             ```
