@@ -15,23 +15,26 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v2
 
-      - name: Set Tag Name
-        id: set_tag_name
-        run: echo "::set-output name=tag_name::TEST-DEV_$(date +'%dth-%b_%H-%M%p')"
-
-      - name: Create Tag
-        run: git tag ${{ steps.set_tag_name.outputs.tag_name }}
-
       - name: Fetch master branch and old tag
         run: |
-          git fetch origin master --tags
-          echo "OLD_TAG=$(git describe --abbrev=0 --tags origin/master)" >> $GITHUB_ENV
+          git fetch --tags origin
+          old_tag=$(git describe --tags --abbrev=0)
+          echo "OLD_TAG=$old_tag" >> $GITHUB_ENV
+
+      - name: Set Tag Name
+        id: set_tag_name
+        run: |
+          old_tag=$OLD_TAG
+          echo "::set-output name=tag_name::${old_tag%%_*}_$(date +'%dth-%b_%H-%M%p')"
+
+      - name: Create Tag
+        run: git tag ${{ steps.set_tag_name.outputs.tag_name }} $OLD_TAG
 
       - name: Compare Changes
-        id: compare_changes
-        run: |
-          changes=$(git diff --name-only $OLD_TAG ${{ steps.set_tag_name.outputs.tag_name }})
-          echo "::set-output name=changes::$changes"
+        run: git diff --name-only $OLD_TAG ${{ steps.set_tag_name.outputs.tag_name }} > changes.txt
+
+      - name: Read Changes
+        run: echo "CHANGES=$(cat changes.txt)" >> $GITHUB_ENV
 
       - name: Push Tag to Remote
         run: git push origin ${{ steps.set_tag_name.outputs.tag_name }}
@@ -42,13 +45,14 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
           OLD_TAG: ${{ env.OLD_TAG }}
+          CHANGES: ${{ env.CHANGES }}
         with:
           tag_name: ${{ steps.set_tag_name.outputs.tag_name }}
           release_name: Release ${{ steps.set_tag_name.outputs.tag_name }}
           body: |
             Changes since $OLD_TAG:
             ```
-            ${{ steps.compare_changes.outputs.changes }}
+            ${{ env.CHANGES }}
             ```
           draft: false
           prerelease: false
