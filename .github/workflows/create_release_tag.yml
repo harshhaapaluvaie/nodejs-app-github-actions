@@ -32,6 +32,29 @@ jobs:
       - name: Push new tag to repository
         run: git push origin ${{ steps.set_new_tag_name.outputs.new_tag_name }}
 
+      - name: Generate Release Notes
+        id: generate_release_notes
+        uses: actions/github-script@v4
+        with:
+          script: |
+            const { context, github } = require('@actions/github');
+
+            const compareCommits = await github.repos.compareCommits({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              base: context.payload.before,
+              head: context.payload.after,
+            });
+
+            let releaseNotes = "### Changes since " + context.payload.before + ":\n\n";
+            for (const commit of compareCommits.data.commits) {
+              releaseNotes += "- " + commit.commit.message + "\n";
+            }
+
+            console.log(releaseNotes);
+
+            return releaseNotes;
+
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
@@ -40,5 +63,6 @@ jobs:
         with:
           tag_name: ${{ steps.set_new_tag_name.outputs.new_tag_name }}
           release_name: Release ${{ steps.set_new_tag_name.outputs.new_tag_name }}
+          body: ${{ steps.generate_release_notes.outputs.result }}
           draft: false
           prerelease: false
