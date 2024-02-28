@@ -26,6 +26,14 @@ jobs:
         id: set_new_tag_name
         run: echo "::set-output name=new_tag_name::TEST-DEV_$(date +'%dth-%b_%H-%M%p')"
 
+      - name: Debug Information
+        run: |
+          echo "Old Tag: ${{ steps.set_old_tag.outputs.old_tag }}"
+          echo "New Tag: ${{ steps.set_new_tag_name.outputs.new_tag_name }}"
+          echo "Repository Owner: ${{ github.repository_owner }}"
+          echo "Repository Name: ${{ github.repository }}"
+          echo "GitHub Token: ${{ secrets.GH_TOKEN }}"
+
       - name: Create new tag from old tag
         run: git tag ${{ steps.set_new_tag_name.outputs.new_tag_name }} ${{ steps.set_old_tag.outputs.old_tag }}
 
