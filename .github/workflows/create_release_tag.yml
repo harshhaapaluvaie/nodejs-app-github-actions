@@ -37,11 +37,9 @@ jobs:
         uses: actions/github-script@v4
         with:
           script: |
-            const github = require('@actions/github');
-
-            const compareCommits = await github.getOctokit(process.env.GITHUB_TOKEN).repos.compareCommits({
-              owner: github.context.repo.owner,
-              repo: github.context.repo.repo,
+            const compareCommits = await github.getOctokit(process.env.GH_TOKEN).repos.compareCommits({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
               base: "${{ steps.set_old_tag.outputs.old_tag }}",
               head: "${{ steps.set_new_tag_name.outputs.new_tag_name }}",
             });
