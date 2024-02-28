@@ -37,16 +37,16 @@ jobs:
         uses: actions/github-script@v4
         with:
           script: |
-            const { context, github } = require('@actions/github');
+            const github = require('@actions/github');
 
-            const compareCommits = await github.repos.compareCommits({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              base: context.payload.before,
-              head: context.payload.after,
+            const compareCommits = await github.getOctokit(process.env.GITHUB_TOKEN).repos.compareCommits({
+              owner: github.context.repo.owner,
+              repo: github.context.repo.repo,
+              base: "${{ steps.set_old_tag.outputs.old_tag }}",
+              head: "${{ steps.set_new_tag_name.outputs.new_tag_name }}",
             });
 
-            let releaseNotes = "### Changes since " + context.payload.before + ":\n\n";
+            let releaseNotes = "### Changes since " + "${{ steps.set_old_tag.outputs.old_tag }}" + ":\n\n";
             for (const commit of compareCommits.data.commits) {
               releaseNotes += "- " + commit.commit.message + "\n";
             }
