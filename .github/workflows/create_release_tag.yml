@@ -20,7 +20,15 @@ jobs:
 
       - name: Set old tag
         id: set_old_tag
-        run: echo "::set-output name=old_tag::$(git describe --tags --abbrev=0)"
+        run: |
+          # Get the current date and time
+          current_date=$(date +'%dth-%b_%H-%M%p')
+      
+          # Find the old tag that matches the pattern
+          old_tag=$(git tag --list "TEST-DEV_*" --sort=-creatordate | grep "$current_date" | head -n 1)
+      
+          # Output the old tag
+          echo "::set-output name=old_tag::$old_tag"
 
       - name: Set new tag name
         id: set_new_tag_name
