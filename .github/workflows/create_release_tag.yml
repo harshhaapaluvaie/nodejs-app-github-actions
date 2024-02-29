@@ -14,21 +14,20 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
-
-      - name: Fetch latest tags
-        run: git fetch --tags origin
-
+        with:
+          fetch-depth: 0  # Fetch all history for tags to be accessible
+  
+      - name: List Tags
+        run: git tag --list  # List all tags in the repository
+  
       - name: Set old tag
         id: set_old_tag
         run: |
-          # Get the current date and time
-          current_date=$(date +'%dth-%b_%H-%M%p')
-      
-          # Find the old tag that matches the pattern
-          old_tag=$(git tag --list "TEST-DEV_*" --sort=-creatordate | grep "$current_date" | head -n 1)
-      
-          # Output the old tag
-          echo "::set-output name=old_tag::$old_tag"
+          echo "::set-output name=old_tag::$(git describe --tags --abbrev=0)"
+  
+      - name: Debug Old Tag
+        run: |
+          echo "Old Tag: ${{ steps.set_old_tag.outputs.old_tag }}"
 
       - name: Set new tag name
         id: set_new_tag_name
@@ -40,7 +39,7 @@ jobs:
           echo "New Tag: ${{ steps.set_new_tag_name.outputs.new_tag_name }}"
           echo "Repository Owner: ${{ github.repository_owner }}"
           echo "Repository Name: ${{ github.repository }}"
-          echo "GitHub Token: ${{ secrets.GH_TOKEN }}"
+          echo "GitHub Token: ${{ secrets.GITHUB_TOKEN }}"
 
       - name: Create new tag from old tag
         run: git tag ${{ steps.set_new_tag_name.outputs.new_tag_name }} ${{ steps.set_old_tag.outputs.old_tag }}
@@ -73,7 +72,7 @@ jobs:
         id: create_release
         uses: actions/create-release@v1
         env:
-          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: ${{ steps.set_new_tag_name.outputs.new_tag_name }}
           release_name: Release ${{ steps.set_new_tag_name.outputs.new_tag_name }}
