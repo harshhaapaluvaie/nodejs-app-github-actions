@@ -35,7 +35,7 @@ jobs:
 
       - name: Set new tag name
         id: set_new_tag_name
-        run: echo "::set-output name=new_tag_name::TEST-DEV_$(date +'%dth-%b_%H-%M%p')"
+        run: echo "::set-output name=new_tag_name::TEST-DEV_$(date +'%dth-%b')-$(date +'%Y')_$(date +'%H-%M%p')"
 
       - name: Debug Information
         run: |
