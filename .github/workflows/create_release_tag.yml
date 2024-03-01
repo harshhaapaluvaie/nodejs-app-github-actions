@@ -16,7 +16,10 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v2
         with:
-          fetch-depth: 0  # Fetch all history for tags to be accessible
+          fetch-depth: 0 # Fetch all history for tags to be accessible
+          # Fine-grained PAT with contents:write and workflows:write
+          # scopes
+          token: ${{ secrets.GH_TOKEN }}  
   
       - name: List Tags
         run: git tag --list  # List all tags in the repository
@@ -46,8 +49,6 @@ jobs:
         run: git tag ${{ steps.set_new_tag_name.outputs.new_tag_name }} ${{ steps.set_old_tag.outputs.old_tag }}
 
       - name: Push new tag to repository
-        env:
-          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
         run: git push origin ${{ steps.set_new_tag_name.outputs.new_tag_name }}
 
       - name: Generate Release Notes
